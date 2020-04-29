@@ -1,91 +1,3 @@
-def findBrackets( aString, startBracket="<", endBracket=">" ):
-    if startBracket in aString:
-        match = aString.split(startBracket,1)[1]
-        print (match)
-        open = 1
-        for index in range(0, len(match)):
-            if match[index:index + len(endBracket)] == endBracket:
-                open = open - 1
-            elif match[index:index+len(startBracket)] == startBracket:
-                open = open + 1
-
-            if open==0:
-                #return found string and rest string
-                return match[:index], match[index+len(endBracket):]
-        print("bracket match:", open)
-    else:
-        print("no brackets found")
-    return "", ""
-
-
-def findBlock( aString, description="" ):
-    signature = "<"+description+">"
-    startBracket="<"
-    endBracket="</>"
-    if signature in aString:
-        match = aString.split(signature,1)[1]
-        open = 1
-        for index in range(0, len(match)):
-            if match[index:index + len(endBracket)] == endBracket:
-                open = open - 1
-            elif match[index:index+len(startBracket)] == startBracket:
-                open = open + 1
-            if open==0:
-                return match[:index]
-
-def getNextBlock( aString):
-    startBracket="<"
-    endBracket="</>"
-    block, rest = findBrackets(aString, startBracket="<", endBracket="</>")
-    block="<"+block
-    description, contents = findBrackets(block, startBracket="<", endBracket=">")
-
-    return description, contents, rest
-
-
-
-def serializeParameterList(parameters):
-    output = ""
-
-    if isinstance(parameters, (list)):
-        output += "<list>"
-        for p in parameters:
-            output += serializeParameterList(p)
-        output += "</list>"
-    else:
-        output += parameters.serialize() + "\n"
-    return output
-
-def exportRecursiveList(parameters):
-    output = []
-    if isinstance(parameters, (list)):
-        for p in parameters:
-            output.append(exportRecursiveList(p))
-    else:
-        output.append(parameters.toDict())
-    return output
-
-def itemsParser(inputString, classlist):
-    remain = inputString
-    #while len(remain)>0:
-    description, contents, remain = getNextBlock(remain)
-    print(description, contents, remain)
-
-
-def buildItemFromDict(itemDict, classes):
-
-    # create object
-    item = classes[itemDict["type"]]
-    return item
-
-def flattenRecursiveList(paramList):
-    output = []
-    if isinstance(paramList, (list)):
-        for p in paramList:
-            output+=flattenRecursiveList(p)
-    else:
-        output.append(paramList)
-    return output
 
 class ItemWithParameters:
     def __init__(self, name="-",  parameters=[]):
@@ -95,7 +7,6 @@ class ItemWithParameters:
 
     def getName(self):
         return self.name
-
 
     # store all parameters to a dict
     def toDict(self):
@@ -109,7 +20,6 @@ class ItemWithParameters:
             if p["name"] in flattenedDict.keys():
                 print("updating " + p["name"])
                 flattenedDict[p["name"]].updateValueByString(p["value"])
-
 
     def serialize(self):
         output='<Item class="%s" name="%s">\n'%(self.__class__.__name__, self.name.getValue())
@@ -145,6 +55,8 @@ class EditableParameter:
         self.value=value
         if self.callback!=None:
             self.callback(self)
+        if self.viewRefresh!=None:
+            self.viewRefresh(self)
 
     def commitValue(self):
         if self.callback != None:
@@ -357,3 +269,90 @@ class ActionParameter(EditableParameter):
     def updateValueByString(self,  value):
         pass
 
+def findBrackets( aString, startBracket="<", endBracket=">" ):
+    if startBracket in aString:
+        match = aString.split(startBracket,1)[1]
+        print (match)
+        open = 1
+        for index in range(0, len(match)):
+            if match[index:index + len(endBracket)] == endBracket:
+                open = open - 1
+            elif match[index:index+len(startBracket)] == startBracket:
+                open = open + 1
+
+            if open==0:
+                #return found string and rest string
+                return match[:index], match[index+len(endBracket):]
+        print("bracket match:", open)
+    else:
+        print("no brackets found")
+    return "", ""
+
+
+def findBlock( aString, description="" ):
+    signature = "<"+description+">"
+    startBracket="<"
+    endBracket="</>"
+    if signature in aString:
+        match = aString.split(signature,1)[1]
+        open = 1
+        for index in range(0, len(match)):
+            if match[index:index + len(endBracket)] == endBracket:
+                open = open - 1
+            elif match[index:index+len(startBracket)] == startBracket:
+                open = open + 1
+            if open==0:
+                return match[:index]
+
+def getNextBlock( aString):
+    startBracket="<"
+    endBracket="</>"
+    block, rest = findBrackets(aString, startBracket="<", endBracket="</>")
+    block="<"+block
+    description, contents = findBrackets(block, startBracket="<", endBracket=">")
+
+    return description, contents, rest
+
+
+def serializeParameterList(parameters):
+    output = ""
+
+    if isinstance(parameters, (list)):
+        output += "<list>"
+        for p in parameters:
+            output += serializeParameterList(p)
+        output += "</list>"
+    else:
+        output += parameters.serialize() + "\n"
+    return output
+
+def exportRecursiveList(parameters):
+    output = []
+    if isinstance(parameters, (list)):
+        for p in parameters:
+            output.append(exportRecursiveList(p))
+    else:
+        output.append(parameters.toDict())
+    return output
+
+def itemsParser(inputString, classlist):
+    remain = inputString
+    #while len(remain)>0:
+    description, contents, remain = getNextBlock(remain)
+    print(description, contents, remain)
+
+
+def buildItemFromDict(itemDict, classes):
+
+    # create object
+    item = classes[itemDict["type"]]
+    return item
+
+def flattenRecursiveList(paramList):
+    output = []
+    if isinstance(paramList, (list)):
+        for p in paramList:
+            output+=flattenRecursiveList(p)
+    else:
+        output.append(paramList)
+    return output
