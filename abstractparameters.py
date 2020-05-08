@@ -1,3 +1,4 @@
+import datetime
 
 class ItemWithParameters:
     def __init__(self, name="-",  parameters=[]):
@@ -107,6 +108,22 @@ class FileParameter(EditableParameter):
         self.value=value
         self.fileSelectionPattern=fileSelectionPattern
 
+class DateParameter(EditableParameter):
+    def __init__(self,  value="", formatString="%d/%m/%Y %H:%M:%S",     **kwargs):
+        EditableParameter.__init__(self, **kwargs)
+        self.value = value
+        self.formatString=formatString
+        if self.value is not None:
+            self.value.strftime(self.formatString)
+            print("new date", self.value)
+
+    def updateValue(self, value):
+        self.value = value
+        self.value.strftime(self.formatString)
+        if self.callback != None:
+            self.callback(self)
+        if self.viewRefresh != None:
+            self.viewRefresh(self)
 
 class NumericalParameter(EditableParameter):
     def __init__(self,  value=0,  min=None,  max=None,  step=0,  enforceRange=False,  enforceStep=False,  slider=False, **kwargs):

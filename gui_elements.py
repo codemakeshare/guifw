@@ -329,6 +329,14 @@ def parameterWidgetFactory(object, parent = None):
         if object.editable:
             w.number.valueChanged.connect(object.updateValueQT)
 
+    if object.__class__.__name__ == "DateParameter":
+        w = LabeledTextField(parent=parent, label=object.name, editable=object.editable, formatString="{:s}")
+        w.updateValue(str(object.value))
+        #if object.editable:
+        #    w.text.textChanged.connect(object.updateValueOnly)
+        #    w.text.editingFinished.connect(object.commitValue)
+
+
     if object.__class__.__name__ == "ProgressParameter":
         w = LabeledProgressField(parent=parent, label=object.name, min=object.min, max=object.max, value=object.getValue())
 
