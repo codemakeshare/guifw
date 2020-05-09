@@ -239,9 +239,11 @@ class LabeledNumberField(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
         self.step = step # used for slider scaling
+        decimals = 1
         if self.step==0:
             self.step = 0.001 # set default if zero is given to avoid issues
-        decimals = round(math.log(1.0 / step) / math.log(10.0))
+        else:
+            decimals = round(math.log(1.0 / step) / math.log(10.0))
 
         self.number = None
         if step==1.0:
