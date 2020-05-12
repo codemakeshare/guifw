@@ -265,7 +265,7 @@ class ChoiceParameter(EditableParameter):
             self.callback(self)
 
         if self.viewRefresh != None:
-            self.viewRefresh()
+            self.viewRefresh(self)
         #print(self.value)
 
     def updateValueByIndex(self, index):
@@ -275,7 +275,7 @@ class ChoiceParameter(EditableParameter):
             self.callback(self)
 
         if self.viewRefresh != None:
-            self.viewRefresh()
+            self.viewRefresh(self)
         #print(self.value)
 
 
@@ -285,6 +285,13 @@ class ActionParameter(EditableParameter):
 
     def updateValueByString(self,  value):
         pass
+
+class ImageViewer(EditableParameter):
+    def __init__(self, image = None, height = 100, **kwargs):
+        EditableParameter.__init__(self, **kwargs)
+        self.height = height
+        self.value =  image
+
 
 def findBrackets( aString, startBracket="<", endBracket=">" ):
     if startBracket in aString:

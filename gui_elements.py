@@ -16,6 +16,8 @@ import traceback
 from importlib import *
 import json
 from guifw.abstractparameters import  *
+from PIL import Image
+import numpy as np
 
 class HorizontalBar(QWidget):
     def __init__(self,  parent=None):
@@ -44,6 +46,8 @@ class CommandButton(QtWidgets.QPushButton):
         self.callback_argument=callback_argument
         self.setContentsMargins(0,0,0,0)
 
+    def updateFromParameter(self, parameter):
+        pass
 
     def clickedHandler(self):
         if self.callback is not None:
@@ -63,7 +67,7 @@ class PlainComboField(QComboBox):
             self.setCurrentIndex(list(self.choices).index(value))
         self.combo=self
 
-    def update(self,  parameter):
+    def updateFromParameter(self, parameter):
         if parameter!=None:
             self.combo.setCurrentIndex(self.choices.index(parameter.getValue()))
 
@@ -108,9 +112,10 @@ class LabeledComboField(QWidget):
             self.combo.setCurrentIndex(choices.index(value))
         self.layout.addWidget(self.combo)
 
-    def update(self,  parameter):
+    def updateFromParameter(self, parameter):
         if parameter!=None:
-            self.combo.setCurrentIndex(self.choices.index(parameter.getValueString()))
+            self.updateChoices(parameter.getChoiceStrings())
+            self.updateValue(parameter.getValueString())
 
     def updateValue(self,  value):
         if value!=None:
@@ -153,7 +158,7 @@ class LabeledTextField(QWidget):
             self.text.setText(formatString.format(value))
         self.layout.addWidget(self.text)
 
-    def update(self,  parameter):
+    def updateFromParameter(self, parameter):
         if parameter!=None:
             self.updateValue(parameter.getValue())
 
@@ -181,7 +186,7 @@ class LabeledProgressField(QWidget):
         self.updateValue(value=value,  min=min,  max=max)
         self.layout.addWidget(self.progress)
 
-    def update(self,  parameter):
+    def updateFromParameter(self, parameter):
         if parameter!=None:
             self.updateValue(parameter.getValue(),  parameter.min,  parameter.max)
 
@@ -210,7 +215,7 @@ class LabeledFileField(QWidget):
         self.fileDialogButton.clicked.connect(self.showDialog)
         self.layout.addWidget(self.fileDialogButton)
 
-    def update(self,  parameter):
+    def updateFromParameter(self, parameter):
         if parameter!=None:
             self.updateValue(parameter.getValue())
 
@@ -298,7 +303,7 @@ class LabeledNumberField(QWidget):
             self.slider.setValue(self.number.value()/self.step)
             self.slider.blockSignals(False)
 
-    def update(self, parameter):
+    def updateFromParameter(self, parameter):
         if parameter != None:
             self.updateValue(parameter.getValue())
 
@@ -307,10 +312,92 @@ class LabeledNumberField(QWidget):
         if self.slider is not None:
             self.slider.setValue(value/self.step)
 
+class ClickableLabel(QLabel):
+    clicked = QtCore.pyqtSignal()
+
+    def __init__(self, **kwargs):
+        QLabel.__init__(self, **kwargs)
+
+    def mousePressEvent(self, ev):
+        self.clicked.emit()
+
+
+class LabeledImageField(QWidget):
+    def __init__(self, parent=None, label="", image = None, height = 100):
+        QWidget.__init__(self, parent=parent)
+
+        self.image = None
+        self.labelText=label
+        self.layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.layout)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.image_label = ClickableLabel(parent=self, text="no image")
+        self.image_label.setFixedHeight(height)
+        self.image_label.clicked.connect(self.showLarge)
+        self.layout.addWidget(self.image_label)
+        self.label = QtWidgets.QLabel(label)
+        self.layout.addWidget(self.label)
+        self.height = height
+        self.image_label.resize(self.height, self.height)
+        self.loadImage(image)
+
+
+    def loadImage(self, image):
+        if isinstance(image, str):
+            print("loading ", image)
+            try:
+                self.image = np.asarray(Image.open(image))
+            except:
+                self.image = None
+        else:
+            self.image = image
+
+        if self.image is not None:
+            h, w, ch = self.image.shape
+            bytesPerLine = ch * w
+            qimage = QtGui.QImage(self.image.data, w, h, bytesPerLine, QtGui.QImage.Format_RGB888)
+            pixmap = QtGui.QPixmap(qimage)
+            pixmap = pixmap.scaled(self.height*w/h, self.height, QtCore.Qt.KeepAspectRatio)
+            self.image_label.setPixmap(pixmap)
+
+    def showLarge(self):
+        print("showLarge")
+        if self.image is not None:
+
+
+            self.largeview = QLabel(parent=None, text="no image")
+            h, w, ch = self.image.shape
+            bytesPerLine = ch * w
+            qimage = QtGui.QImage(self.image.data, w, h, bytesPerLine, QtGui.QImage.Format_RGB888)
+            pixmap = QtGui.QPixmap(qimage)
+            self.largeview.setPixmap(pixmap)
+
+            self.largeview.resize(self.image.shape[1], self.image.shape[0])
+
+            self.scroll = QtWidgets.QScrollArea(None)
+
+            self.scroll.setWidgetResizable(True)
+            self.scroll.resize(self.image.shape[1], self.image.shape[0])
+            self.scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+            self.scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+
+            self.scroll.setWidget(self.largeview)
+            self.scroll.setWindowTitle(self.labelText)
+            self.scroll.show()
+
+    def updateFromParameter(self, parameter):
+        self.labelText=parameter.name
+        self.label.setText(self.labelText)
+        self.loadImage(parameter.getValue())
+
+    def updateValue(self,  value):
+        self.loadImage(value)
+
+
 
 def parameterWidgetFactory(object, parent = None):
     w = None
-
     if object.__class__.__name__ == "TextParameter":
         w = LabeledTextField(parent=parent, label=object.name, editable=object.editable, formatString=object.formatString)
 
@@ -338,7 +425,6 @@ def parameterWidgetFactory(object, parent = None):
         #    w.text.textChanged.connect(object.updateValueOnly)
         #    w.text.editingFinished.connect(object.commitValue)
 
-
     if object.__class__.__name__ == "ProgressParameter":
         w = LabeledProgressField(parent=parent, label=object.name, min=object.min, max=object.max, value=object.getValue())
 
@@ -352,7 +438,12 @@ def parameterWidgetFactory(object, parent = None):
     if object.__class__.__name__ == "ActionParameter":
         w = QtWidgets.QPushButton(object.name)
         w.clicked.connect(object.callback)
-    object.viewRefresh = w.update
+        w.updateFromParameter=None
+
+    if object.__class__.__name__ == "ImageViewer":
+        w = LabeledImageField(parent=parent, label = object.name, image = object.getValue(), height = object.height)
+
+    object.viewRefresh = w.updateFromParameter
     return w
 
 class ToolPropertyWidget(QWidget):
@@ -382,8 +473,6 @@ class ToolPropertyWidget(QWidget):
         self.addToolWidgets(self.layout,  tool.parameters)
         self.layout.addStretch()
 
-
-
     def addToolWidgets(self,  layout,  widgetlist):
 
         # get editable parameters
@@ -401,7 +490,7 @@ class ToolPropertyWidget(QWidget):
                 w = parameterWidgetFactory(object, parent = self)
                 self.parameters[p] = w
                 layout.addWidget(w)
-                object.viewRefresh = self.update
+                #object.viewRefresh = self.update
 
             if w is not None:
                 self.parameters[p] = w
@@ -410,30 +499,6 @@ class ToolPropertyWidget(QWidget):
         layout.setSpacing(0);
         #layout.addStretch()
 
-    def update(self, parameter=None):
-        # get editable parameters
-        for object in self.parameters.keys():
-            w=self.parameters[object]
-
-            w.setDisabled(not object.active)
-            if object.__class__.__name__=="TextParameter":
-                w.updateValue(object.value)
-
-            if object.__class__.__name__=="FileParameter":
-                w.updateValue(object.value)
-
-            if object.__class__.__name__=="ProgressParameter":
-                w.updateValue(value=object.value,  min=object.min,  max=object.max)
-
-            if object.__class__.__name__=="NumericalParameter":
-                w.updateValue(object.value)
-
-            if object.__class__.__name__=="ChoiceParameter":
-                w.updateChoices(object.getChoiceStrings())
-                w.updateValue(object.getValueString())
-
-            if object.__class__.__name__=="ActionParameter":
-                None
 
 class ItemListModel(QtCore.QAbstractListModel):
     def __init__(self, itemlist, parent=None, *args):
