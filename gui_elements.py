@@ -322,6 +322,35 @@ class ClickableLabel(QLabel):
         self.clicked.emit()
 
 
+class ScrollImageView(QtWidgets.QGraphicsView):
+    def __init__(self, parent=None, image=None, name=""):
+        QtWidgets.QGraphicsView.__init__(self, parent=parent)
+        self.image=image
+        h, w, ch = self.image.shape
+        bytesPerLine = ch * w
+        qimage = QtGui.QImage(self.image.data, w, h, bytesPerLine, QtGui.QImage.Format_RGB888)
+        self.pixmap = QtGui.QPixmap(qimage)
+
+        self.scene = QGraphicsScene()
+        self.scene.addPixmap(self.pixmap)
+        self.setScene(self.scene)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.zoom=1
+        self.setWindowTitle(name)
+        self.show()
+
+    def wheelEvent(self, event):
+        if event.angleDelta().y() > 0:
+            self.zoom *= 1.25
+        else:
+            self.zoom *= 0.80
+        h, w, ch = self.image.shape
+        m = self.transform()
+        m.reset()
+        m.scale(self.zoom, self.zoom)
+        self.setTransform(m)
+
 class LabeledImageField(QWidget):
     def __init__(self, parent=None, label="", image = None, height = 100):
         QWidget.__init__(self, parent=parent)
@@ -364,27 +393,9 @@ class LabeledImageField(QWidget):
     def showLarge(self):
         print("showLarge")
         if self.image is not None:
-
-
-            self.largeview = QLabel(parent=None, text="no image")
-            h, w, ch = self.image.shape
-            bytesPerLine = ch * w
-            qimage = QtGui.QImage(self.image.data, w, h, bytesPerLine, QtGui.QImage.Format_RGB888)
-            pixmap = QtGui.QPixmap(qimage)
-            self.largeview.setPixmap(pixmap)
-
-            self.largeview.resize(self.image.shape[1], self.image.shape[0])
-
-            self.scroll = QtWidgets.QScrollArea(None)
-
-            self.scroll.setWidgetResizable(True)
-            self.scroll.resize(self.image.shape[1], self.image.shape[0])
-            self.scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-            self.scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-
-            self.scroll.setWidget(self.largeview)
-            self.scroll.setWindowTitle(self.labelText)
+            self.scroll = ScrollImageView(parent=None, image=self.image, name=self.labelText)
             self.scroll.show()
+
 
     def updateFromParameter(self, parameter):
         self.labelText=parameter.name
