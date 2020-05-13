@@ -18,6 +18,7 @@ import json
 from guifw.abstractparameters import  *
 from PIL import Image
 import numpy as np
+import gc
 
 class HorizontalBar(QWidget):
     def __init__(self,  parent=None):
@@ -100,7 +101,7 @@ class LabeledComboField(QWidget):
         QWidget.__init__( self, parent=parent)
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
-        self.label=QtWidgets.QLabel(label)
+        self.label=QtWidgets.QLabel(parent=self, text=label)
         self.layout.addWidget(self.label)
         self.combo=QtWidgets.QComboBox(parent=self)
         self.choices = choices
@@ -142,7 +143,7 @@ class LabeledTextField(QWidget):
         self.setLayout(self.layout)
         self.formatString=formatString
         self.editable=editable
-        self.label=QtWidgets.QLabel(label)
+        self.label=QtWidgets.QLabel(parent=self, text=label)
         self.layout.addWidget(self.label)
         self.text=QtWidgets.QLineEdit(parent=self)
         self.text.setReadOnly(not self.editable)
@@ -174,13 +175,18 @@ class LabeledTextField(QWidget):
         if self.edited_callback is not None:
             self.edited_callback(self.edited_callback_argument)
 
+    def closeEvent(self, ev):
+        self.edited_callback=None
+        self.label.close()
+        self.text.close()
+
 
 class LabeledProgressField(QWidget):
     def __init__(self, parent=None,  label="", value=None, min=None,  max=None,  step=1.0):
         QWidget.__init__( self, parent=parent)
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
-        self.label=QtWidgets.QLabel(label)
+        self.label=QtWidgets.QLabel(parent=self, text=label)
         self.layout.addWidget(self.label)
         self.progress=QtWidgets.QProgressBar(parent=self)
         self.updateValue(value=value,  min=min,  max=max)
@@ -203,15 +209,15 @@ class LabeledFileField(QWidget):
         self.setLayout(self.layout)
         self.fileSelectionPattern=fileSelectionPattern
         self.editable=editable
-        self.label=QtWidgets.QLabel(label)
+        self.label=QtWidgets.QLabel(parent=self, text=label)
         self.layout.addWidget(self.label)
-        self.text=QtWidgets.QLineEdit(parent=self)
+        self.text=QtWidgets.QLineEdit( parent=self)
         self.text.setReadOnly(not self.editable)
         if value!=None:
             self.text.setText(formatString.format(value))
         self.layout.addWidget(self.text)
 
-        self.fileDialogButton=QtWidgets.QPushButton("Select...")
+        self.fileDialogButton=QtWidgets.QPushButton(parent=self, text= "Select...")
         self.fileDialogButton.clicked.connect(self.showDialog)
         self.layout.addWidget(self.fileDialogButton)
 
@@ -239,7 +245,7 @@ class LabeledNumberField(QWidget):
         QWidget.__init__( self, parent=parent)
         self.layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.layout)
-        self.label=QtWidgets.QLabel(label)
+        self.label=QtWidgets.QLabel(parent=self, text=label)
         self.layout.addWidget(self.label)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
@@ -276,14 +282,14 @@ class LabeledNumberField(QWidget):
             self.sliderLayout.setSpacing(0)
             self.sliderLayout.setContentsMargins(0, 0, 0, 0)
             self.sliderWidget = QtWidgets.QWidget()
-            self.slider = QtWidgets.QSlider(orientation=QtCore.Qt.Horizontal)
+            self.slider = QtWidgets.QSlider(parent = self, orientation=QtCore.Qt.Horizontal)
             if min != None:
                 self.slider.setMinimum(min/self.step)
             if max != None:
                 self.slider.setMaximum(max/self.step)
             self.slider.setValue(value/self.step)
             self.slider.valueChanged.connect(self.sliderChanged)
-            labelednumber_widget = QtWidgets.QWidget()
+            labelednumber_widget = QtWidgets.QWidget(parent=self)
             labelednumber_widget.setLayout(self.layout)
             self.sliderLayout.addWidget(labelednumber_widget)
             self.sliderLayout.addWidget(self.slider)
@@ -293,6 +299,12 @@ class LabeledNumberField(QWidget):
         else:
             self.slider = None
             self.setLayout(self.layout)
+
+    def closeEvent(self, ev):
+        self.label.close()
+        self.number.close()
+        if self.slider is not None:
+            self.slider.close()
 
     def sliderChanged(self):
         self.number.setValue(self.slider.value()*self.step)
@@ -331,7 +343,7 @@ class ScrollImageView(QtWidgets.QGraphicsView):
         qimage = QtGui.QImage(self.image.data, w, h, bytesPerLine, QtGui.QImage.Format_RGB888)
         self.pixmap = QtGui.QPixmap(qimage)
 
-        self.scene = QGraphicsScene()
+        self.scene = QGraphicsScene(parent=self)
         self.scene.addPixmap(self.pixmap)
         self.setScene(self.scene)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
@@ -365,7 +377,7 @@ class LabeledImageField(QWidget):
         self.image_label.setFixedHeight(height)
         self.image_label.clicked.connect(self.showLarge)
         self.layout.addWidget(self.image_label)
-        self.label = QtWidgets.QLabel(label)
+        self.label = QtWidgets.QLabel(parent=self, text=label)
         self.layout.addWidget(self.label)
         self.height = height
         self.image_label.resize(self.height, self.height)
@@ -385,7 +397,7 @@ class LabeledImageField(QWidget):
         if self.image is not None:
             h, w, ch = self.image.shape
             bytesPerLine = ch * w
-            qimage = QtGui.QImage(self.image.data, w, h, bytesPerLine, QtGui.QImage.Format_RGB888)
+            qimage = QtGui.QImage(  self.image.data, w, h, bytesPerLine, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap(qimage)
             pixmap = pixmap.scaled(self.height*w/h, self.height, QtCore.Qt.KeepAspectRatio)
             self.image_label.setPixmap(pixmap)
@@ -405,7 +417,12 @@ class LabeledImageField(QWidget):
     def updateValue(self,  value):
         self.loadImage(value)
 
-
+    def closeEvent(self, ev):
+        self.image = None
+        self.image_label.close()
+        self.image_label=None
+        self.label.close()
+        self.label=None
 
 def parameterWidgetFactory(object, parent = None):
     w = None
@@ -447,7 +464,7 @@ def parameterWidgetFactory(object, parent = None):
                 object.updateValueByIndex)
 
     if object.__class__.__name__ == "ActionParameter":
-        w = QtWidgets.QPushButton(object.name)
+        w = QtWidgets.QPushButton(parent = parent, text=object.name)
         w.clicked.connect(object.callback)
         w.updateFromParameter=None
 
@@ -465,16 +482,16 @@ class ToolPropertyWidget(QWidget):
     def __init__(self, parent,  tool):
         QWidget.__init__( self, parent=parent)
 
-        self.scroll = QtWidgets.QScrollArea(self)
+        self.scroll = QtWidgets.QScrollArea(parent=self)
 
         self.scroll.setWidgetResizable(True)
-        self.outer_layout = QtWidgets.QVBoxLayout(self)
+        self.outer_layout = QtWidgets.QVBoxLayout()
         self.outer_layout.addWidget(self.scroll)
 
         self.scroll.setVerticalScrollBarPolicy(Qt.Qt.ScrollBarAsNeeded)
         self.scroll.setHorizontalScrollBarPolicy(Qt.Qt.ScrollBarAsNeeded)
 
-        self.scrollcontent=QtWidgets.QWidget(self.scroll)
+        self.scrollcontent=QtWidgets.QWidget(parent=self.scroll)
         self.layout = QtWidgets.QVBoxLayout(self.scrollcontent)
         self.scrollcontent.setLayout(self.layout)
         self.scroll.setWidget(self.scrollcontent)
@@ -501,7 +518,7 @@ class ToolPropertyWidget(QWidget):
                 w = parameterWidgetFactory(object, parent = self)
                 self.parameters[p] = w
                 layout.addWidget(w)
-                #object.viewRefresh = self.update
+                object.viewRefresh = self.update
 
             if w is not None:
                 self.parameters[p] = w
@@ -510,6 +527,15 @@ class ToolPropertyWidget(QWidget):
         layout.setSpacing(0);
         #layout.addStretch()
 
+    def closeEvent(self, ev):
+        for p in self.parameters.keys():
+            p.viewRefresh = None
+            self.parameters[p].close()
+        self.parameters.clear()
+        self.scroll.close()
+        self.scroll = None
+        self.scrollcontent.close()
+        self.scrollcontent=None
 
 class ItemListModel(QtCore.QAbstractListModel):
     def __init__(self, itemlist, parent=None, *args):
@@ -707,6 +733,8 @@ class ListWidget(QSplitter):
             if self.propertyWidget is not None:
                 self.layout.removeWidget(self.propertyWidget)
                 self.propertyWidget.close()
+                gc.collect()
+
             self.propertyWidget=ToolPropertyWidget(parent=self, tool=self.selectedTool)
             self.rightLayout.addWidget(self.propertyWidget, 0, 0)
             if self.on_select_cb!=None:
