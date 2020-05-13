@@ -478,20 +478,19 @@ class ToolPropertyWidget(QWidget):
     def updateParameter(self,  object=None,  newValue=None):
         object.updateValue(newValue)
 
-
     def __init__(self, parent,  tool):
         QWidget.__init__( self, parent=parent)
 
         self.scroll = QtWidgets.QScrollArea(parent=self)
 
         self.scroll.setWidgetResizable(True)
-        self.outer_layout = QtWidgets.QVBoxLayout()
+        self.outer_layout = QtWidgets.QVBoxLayout(self)
         self.outer_layout.addWidget(self.scroll)
 
         self.scroll.setVerticalScrollBarPolicy(Qt.Qt.ScrollBarAsNeeded)
         self.scroll.setHorizontalScrollBarPolicy(Qt.Qt.ScrollBarAsNeeded)
 
-        self.scrollcontent=QtWidgets.QWidget(parent=self.scroll)
+        self.scrollcontent = QtWidgets.QWidget(self.scroll)
         self.layout = QtWidgets.QVBoxLayout(self.scrollcontent)
         self.scrollcontent.setLayout(self.layout)
         self.scroll.setWidget(self.scrollcontent)
@@ -703,8 +702,8 @@ class ListWidget(QSplitter):
             #self.layout.addWidget(self.propertyWidget, 0, 1,  3,  1)
             self.rightLayout.addWidget(self.propertyWidget, 0, 0)
 
-        self.setStretchFactor(1, 0)
-        self.setSizes([10, 300])
+        self.setStretchFactor(1, 1)
+        self.setSizes([400, 4000])
 
 
     def searchItem(self):
