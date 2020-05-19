@@ -1,7 +1,7 @@
 import datetime
 
 class ItemWithParameters:
-    def __init__(self, name="-",  parameters=[]):
+    def __init__(self, name="-", name_generator = None,  parameters=[]):
         self.name=TextParameter(parent=self, name="Name", value=name)
         self.selected=False
         self.parameters=parameters
