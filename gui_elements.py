@@ -241,9 +241,10 @@ class LabeledFileField(QWidget):
             self.updateValue(filename[0])
 
 class LabeledNumberField(QWidget):
-    def __init__(self, parent=None,  label="", min=None,  max=None,  value=0,  step=0.001,  slider=False):
+    def __init__(self, parent=None,  label="", min=None,  max=None,  value=0,  step=0.001,  slider=False, editable = True):
         QWidget.__init__( self, parent=parent)
         self.layout = QtWidgets.QHBoxLayout()
+        self.editable = editable
         self.setLayout(self.layout)
         self.label=QtWidgets.QLabel(parent=self, text=label)
         self.layout.addWidget(self.label)
@@ -277,6 +278,7 @@ class LabeledNumberField(QWidget):
         self.layout.addWidget(self.number)
         self.number.valueChanged.connect(self.spinboxChanged)
         self.number.setKeyboardTracking(False)
+        self.number.setReadOnly(not self.editable)
         if slider:
             self.sliderLayout = QtWidgets.QVBoxLayout()
             self.sliderLayout.setSpacing(0)
@@ -441,7 +443,7 @@ def parameterWidgetFactory(object, parent = None):
             w.text.textChanged.connect(object.updateValue)
 
     if object.__class__.__name__ == "NumericalParameter":
-        w = LabeledNumberField(parent=parent, label=object.name, min=object.min, max=object.max, value=object.getValue(), step=object.step, slider = object.slider)
+        w = LabeledNumberField(parent=parent, label=object.name, min=object.min, max=object.max, value=object.getValue(), step=object.step, slider = object.slider, editable=object.editable)
 
         if object.editable:
             w.number.valueChanged.connect(object.updateValueQT)
@@ -517,7 +519,6 @@ class ToolPropertyWidget(QWidget):
                 w = parameterWidgetFactory(object, parent = self)
                 self.parameters[p] = w
                 layout.addWidget(w)
-                object.viewRefresh = self.update
 
             if w is not None:
                 self.parameters[p] = w
