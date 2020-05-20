@@ -704,7 +704,7 @@ class ListWidget(QSplitter):
             self.rightLayout.addWidget(self.propertyWidget, 0, 0)
 
         self.setStretchFactor(1, 1)
-        self.setSizes([400, 4000])
+        self.setSizes([200, 4000])
 
 
     def searchItem(self):
