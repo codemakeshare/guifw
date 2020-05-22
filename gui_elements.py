@@ -759,7 +759,7 @@ class ListWidget(QSplitter):
             index = self.widgetSelect.currentIndex()
             itemToCreate = list(self.itemclass.values())[index]
             print(creationArgs)
-            if creationArgs["name"] is None:
+            if (not "name" in creationArgs) or creationArgs["name"] is None:
                 creationArgs["name"] = list(self.itemclass.keys())[index]
 
         else:
