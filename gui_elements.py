@@ -201,6 +201,25 @@ class LabeledProgressField(QWidget):
         self.progress.setMaximum(max)
         self.progress.setValue(value)
 
+
+class LabeledCheckboxField(QWidget):
+    def __init__(self, parent=None,  label="", value=False,  editable = True):
+        QWidget.__init__( self, parent=parent)
+        self.editable = editable
+        self.layout = QtWidgets.QHBoxLayout()
+        self.setLayout(self.layout)
+        self.checkbox=QtWidgets.QCheckBox(parent=self, text = label)
+
+        self.layout.addWidget(self.checkbox)
+        self.updateValue(value=value)
+
+    def updateFromParameter(self, parameter):
+        if parameter!=None:
+            self.updateValue(parameter.getValue())
+
+    def updateValue(self,  value):
+        self.checkbox.setChecked(value)
+
 class LabeledFileField(QWidget):
     def __init__(self, parent=None, editable=True,  label="", value=None, type="open",  fileSelectionPattern="All files (*.*)"):
         QWidget.__init__( self, parent=parent)
@@ -441,6 +460,10 @@ def parameterWidgetFactory(object, parent = None):
         w.updateValue(object.value)
         if object.editable:
             w.text.textChanged.connect(object.updateValue)
+
+    if object.__class__.__name__ == "CheckboxParameter":
+        w = LabeledCheckboxField(parent=parent, label=object.name, value=object.getValue(), editable=object.editable)
+        w.checkbox.stateChanged.connect(object.updateValue)
 
     if object.__class__.__name__ == "NumericalParameter":
         w = LabeledNumberField(parent=parent, label=object.name, min=object.min, max=object.max, value=object.getValue(), step=object.step, slider = object.slider, editable=object.editable)

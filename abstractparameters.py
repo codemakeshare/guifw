@@ -182,6 +182,26 @@ class ProgressParameter(EditableParameter):
     def updateValueByString(self,  value):
         self.updateValue(float(value))
 
+
+class CheckboxParameter(EditableParameter):
+    def __init__(self,  value=False, **kwargs):
+        EditableParameter.__init__(self,  **kwargs)
+        self.value=value
+
+    def updateValue(self,  value):
+        if type(value)==bool:
+            self.value = value
+        else:
+            if value == 0:
+                self.value = False
+            else:
+                self.value = True
+
+        if self.callback != None:
+            self.callback(self)
+        if self.viewRefresh != None:
+            self.viewRefresh(self)
+
 class Choice:
     def __init__(self, name="", value=None):
         self.name=name
