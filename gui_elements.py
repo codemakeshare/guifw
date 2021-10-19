@@ -682,6 +682,9 @@ class ListWidget(QSplitter):
         self.layout.addWidget(self.listw, 1, 0)  # list widget goes in bottom-left
         self.propertyWidget = None
 
+        self.listw.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.listw.customContextMenuRequested.connect(self.contextMenuEvent)
+
         if addItems or removeItems:
             buttonwidget=QWidget()
             buttonLayout=QtWidgets.QHBoxLayout()
@@ -772,6 +775,35 @@ class ListWidget(QSplitter):
 
     def getItems(self):
         return [i for i in self.listmodel.listdata]
+
+
+    ## context menu handlers
+    def contextMenuEvent(self, pos):
+        if self.listw.selectionModel().selection().indexes():
+            for i in self.listw.selectionModel().selection().indexes():
+                row, column = i.row(), i.column()
+            menu = QtWidgets.QMenu()
+            filterAction = menu.addAction("duplicate")
+            clearAction = menu.addAction("delete")
+
+            action = menu.exec_(self.mapToGlobal(pos))
+
+            if action == filterAction:
+                selectedTool = self.listmodel.listdata[row]
+                print("duplicate", row, selectedTool)
+                args = {i: self.creationArgs[i] for i in self.creationArgs if i != "name"}
+                newItem = type(selectedTool)(name = selectedTool.name.getValue(), **args)
+                counter = 1
+                newName = newItem.name.value
+                while newName in [i.name.value for i in self.listmodel.listdata]:
+                    newName = "%s - %i" % (newItem.name.value, counter)
+                    counter += 1
+                newItem.name.updateValue(newName)
+                newItem.restoreParametersFromDict(selectedTool.toDict()["parameters"])
+                self.listmodel.addItem(newItem)
+
+            if action == clearAction:
+                print("delete")
 
 
     def addItem(self,  dummy=None, addExistingItems=True,  **creationArgs):

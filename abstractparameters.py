@@ -20,7 +20,7 @@ class ItemWithParameters:
         for p in flattenRecursiveList(paramList):
             if p["name"] in flattenedDict.keys():
                 print("updating " + p["name"])
-                flattenedDict[p["name"]].updateValueByString(p["value"])
+                flattenedDict[p["name"]].updateValueByString(value = p["value"], execute_callbacks = False)
 
     def serialize(self):
         output='<Item class="%s" name="%s">\n'%(self.__class__.__name__, self.name.getValue())
@@ -52,11 +52,11 @@ class EditableParameter:
     def updateValueOnly(self,  value):
         self.value=value
 
-    def updateValue(self,  value):
+    def updateValue(self,  value, execute_callbacks=True):
         self.value=value
-        if self.callback!=None:
+        if execute_callbacks and self.callback!=None:
             self.callback(self)
-        if self.viewRefresh!=None:
+        if execute_callbacks and self.viewRefresh!=None:
             self.viewRefresh(self)
 
     def commitValue(self):
@@ -66,8 +66,8 @@ class EditableParameter:
         if self.viewRefresh!=None:
             self.viewRefresh(self)
 
-    def updateValueByString(self,  value):
-        self.updateValue(value)
+    def updateValueByString(self,  value, execute_callbacks=True):
+        self.updateValue(value, execute_callbacks)
 
     def setActive(self,  active):
         if self.active == active:
@@ -117,12 +117,12 @@ class DateParameter(EditableParameter):
             self.value.strftime(self.formatString)
             print("new date", self.value)
 
-    def updateValue(self, value):
+    def updateValue(self, value,  execute_callbacks = True):
         self.value = value
         self.value.strftime(self.formatString)
-        if self.callback != None:
+        if execute_callbacks and self.callback != None:
             self.callback(self)
-        if self.viewRefresh != None:
+        if execute_callbacks and self.viewRefresh != None:
             self.viewRefresh(self)
 
 class NumericalParameter(EditableParameter):
@@ -140,8 +140,8 @@ class NumericalParameter(EditableParameter):
         self.enforceRange=enforceRange
         self.enforceStep=enforceStep
 
-    def updateValueByString(self,  value):
-        self.updateValue(float(value))
+    def updateValueByString(self,  value, execute_callbacks = True):
+        self.updateValue(float(value), execute_callbacks)
 
     def updateValueQT(self,  value):
         #print "new value",  value
@@ -153,16 +153,16 @@ class NumericalParameter(EditableParameter):
         if self.callback!=None:
             self.callback(self)
 
-    def updateValue(self,  value):
+    def updateValue(self,  value, execute_callbacks = True):
         #print "new value",  value
         self.value=value
         if self.enforceRange:
             self.value=min(self.max,  max(self.min,  self.value))
         if self.enforceStep:
             self.value=float(int(self.value/self.step)*self.step)
-        if self.callback!=None:
+        if execute_callbacks and self.callback!=None:
             self.callback(self)
-        if self.viewRefresh!=None:
+        if execute_callbacks and self.viewRefresh!=None:
             self.viewRefresh(self)
 
 class ProgressParameter(EditableParameter):
@@ -179,7 +179,7 @@ class ProgressParameter(EditableParameter):
         self.min=min
         self.max=max
 
-    def updateValueByString(self,  value):
+    def updateValueByString(self,  value, execute_callbacks = True):
         self.updateValue(float(value))
 
 
@@ -188,7 +188,7 @@ class CheckboxParameter(EditableParameter):
         EditableParameter.__init__(self,  **kwargs)
         self.value=value
 
-    def updateValue(self,  value):
+    def updateValue(self,  value, execute_callbacks = True):
         if type(value)==bool:
             self.value = value
         else:
@@ -197,9 +197,9 @@ class CheckboxParameter(EditableParameter):
             else:
                 self.value = True
 
-        if self.callback != None:
+        if execute_callbacks and self.callback != None:
             self.callback(self)
-        if self.viewRefresh != None:
+        if execute_callbacks and self.viewRefresh != None:
             self.viewRefresh(self)
 
 class Choice:
@@ -256,7 +256,7 @@ class ChoiceParameter(EditableParameter):
                     return i
         return -1
 
-    def updateValue(self,  value):
+    def updateValue(self,  value, execute_callbacks = True):
         #print(self.name, value)
         for c in self.choices:
             if "name" in dir(c) and "value" in dir(c):
@@ -268,12 +268,12 @@ class ChoiceParameter(EditableParameter):
                     self.value = c
                     #print("set ", self.name, "to", self.value)
                     break
-        if self.callback != None:
+        if execute_callbacks and self.callback != None:
             self.callback(self)
-        if self.viewRefresh != None:
+        if execute_callbacks and self.viewRefresh != None:
             self.viewRefresh(self)
 
-    def updateValueByString(self,  value):
+    def updateValueByString(self,  value, execute_callbacks = True):
         #print "update value by string:", value
         strings = self.getChoiceStrings()
         for i in range(0, len(self.choices)):
@@ -281,20 +281,20 @@ class ChoiceParameter(EditableParameter):
             if s == value:
                 print(i,  s)
                 self.value = self.choices[i]
-        if self.callback != None:
+        if execute_callbacks and self.callback != None:
             self.callback(self)
 
-        if self.viewRefresh != None:
+        if execute_callbacks and self.viewRefresh != None:
             self.viewRefresh(self)
         #print(self.value)
 
-    def updateValueByIndex(self, index):
+    def updateValueByIndex(self, index, execute_callbacks = True):
         self.value = self.choices[index]
 
-        if self.callback != None:
+        if execute_callbacks and self.callback != None:
             self.callback(self)
 
-        if self.viewRefresh != None:
+        if execute_callbacks and self.viewRefresh != None:
             self.viewRefresh(self)
         #print(self.value)
 
