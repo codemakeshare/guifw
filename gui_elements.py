@@ -277,19 +277,28 @@ class LabeledNumberField(QWidget):
             decimals = round(math.log(1.0 / step) / math.log(10.0))
 
         self.number = None
+        self.number = QtWidgets.QDoubleSpinBox(parent=self, decimals=decimals)
         if step==1.0:
-            self.number = QtWidgets.QSpinBox(parent=self)
+            #self.number = QtWidgets.QSpinBox(parent=self)
+            if min != None:
+                self.number.setMinimum(int(min))
+            else:
+                self.number.setMinimum(-10000000)
+            if max!=None:
+                self.number.setMaximum(int(max))
+            else:
+                self.number.setMaximum(10000000)
         else:
             self.number = QtWidgets.QDoubleSpinBox(parent=self, decimals=decimals)
-        if min != None:
-            self.number.setMinimum(min)
-        else:
-            self.number.setMinimum(-10000000)
-        if max!=None:
-            self.number.setMaximum(max)
-        else:
-            self.number.setMaximum(10000000)
-        self.number.setSingleStep(step);
+            if min != None:
+                self.number.setMinimum(min)
+            else:
+                self.number.setMinimum(-10000000)
+            if max!=None:
+                self.number.setMaximum(max)
+            else:
+                self.number.setMaximum(10000000)
+        self.number.setSingleStep(int(step));
         try:
             self.number.setValue(value)
         except:
@@ -304,11 +313,20 @@ class LabeledNumberField(QWidget):
             self.sliderLayout.setContentsMargins(0, 0, 0, 0)
             self.sliderWidget = QtWidgets.QWidget()
             self.slider = QtWidgets.QSlider(parent = self, orientation=QtCore.Qt.Horizontal)
-            if min != None:
-                self.slider.setMinimum(min/self.step)
-            if max != None:
-                self.slider.setMaximum(max/self.step)
-            self.slider.setValue(value/self.step)
+            
+            if step>=1.0:
+                if min != None:
+                    self.slider.setMinimum(int(min/self.step))
+                if max != None:
+                    self.slider.setMaximum(int(max/self.step))
+                self.slider.setValue(int(value/self.step))
+            else:
+                if min != None:
+                    self.slider.setMinimum(min/self.step)
+                if max != None:
+                    self.slider.setMaximum(max/self.step)
+                self.slider.setValue(value/self.step)
+            
             self.slider.valueChanged.connect(self.sliderChanged)
             labelednumber_widget = QtWidgets.QWidget(parent=self)
             labelednumber_widget.setLayout(self.layout)
@@ -333,7 +351,7 @@ class LabeledNumberField(QWidget):
     def spinboxChanged(self):
         if self.slider is not None:
             self.slider.blockSignals(True)
-            self.slider.setValue(self.number.value()/self.step)
+            self.slider.setValue(int(self.number.value()/self.step))
             self.slider.blockSignals(False)
 
     def updateFromParameter(self, parameter):
