@@ -277,8 +277,9 @@ class LabeledNumberField(QWidget):
             decimals = round(math.log(1.0 / step) / math.log(10.0))
 
         self.number = None
-        self.number = QtWidgets.QDoubleSpinBox(parent=self, decimals=decimals)
+        
         if step==1.0:
+            self.number = QtWidgets.QDoubleSpinBox(parent=self, decimals=decimals)
             #self.number = QtWidgets.QSpinBox(parent=self)
             if min != None:
                 self.number.setMinimum(int(min))
@@ -288,6 +289,8 @@ class LabeledNumberField(QWidget):
                 self.number.setMaximum(int(max))
             else:
                 self.number.setMaximum(10000000)
+            self.number.setSingleStep(int(step));
+
         else:
             self.number = QtWidgets.QDoubleSpinBox(parent=self, decimals=decimals)
             if min != None:
@@ -298,7 +301,9 @@ class LabeledNumberField(QWidget):
                 self.number.setMaximum(max)
             else:
                 self.number.setMaximum(10000000)
-        self.number.setSingleStep(int(step));
+            
+            self.number.setSingleStep(step);
+
         try:
             self.number.setValue(value)
         except:
