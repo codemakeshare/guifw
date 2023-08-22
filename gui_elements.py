@@ -672,10 +672,12 @@ class ItemListModel(QtCore.QAbstractListModel):
         return QtCore.Qt.MoveAction
 
 class ListWidget(QSplitter):
-    def __init__(self, parent=None,  title="",  itemlist=[],  itemclass=None,  on_select_cb=None, addItems=True,  removeItems=True, name_generator=None,   **creationArgs):
+    def __init__(self, parent=None,  title="",  itemlist=[],  itemclass=None,  on_select_cb=None, addItems=True,  removeItems=True, name_generator=None, forceUniqueNames = True,  **creationArgs):
         QSplitter.__init__( self, QtCore.Qt.Horizontal, parent=parent)
         self.creationArgs=creationArgs
         self.name_generator = name_generator
+        self.forceUniqueNames = forceUniqueNames
+
         self.on_select_cb=on_select_cb
         ## Create a grid layout to manage the widgets size and position
         self.leftSide = QWidget()
@@ -862,7 +864,7 @@ class ListWidget(QSplitter):
 
             if not nameExists or (nameExists and addExistingItems):
                 counter=1
-                while newName in [i.name.value for i in self.listmodel.listdata]:
+                while self.forceUniqueNames and (newName in [i.name.value for i in self.listmodel.listdata]):
                     newName="%s - %i"%(newItem.name.value,  counter)
                     counter+=1
                 newItem.name.updateValue(newName)
@@ -931,4 +933,12 @@ class ListWidget(QSplitter):
             item = buildItemFromDict(i, classDict) (name = i["name"], **args)
             item.restoreParametersFromDict(i["parameters"])
             print(item)
+
+            
+            originalName = item.name.value
+            counter = 1
+            while self.forceUniqueNames and self.findItem(item.name.value) is not None: 
+                item.name.value = "%s - %i"%(originalName,  counter)
+                counter+=1
+                print("duplicate task name, changing to ", item.name.value)
             self.listmodel.addItem(item)
