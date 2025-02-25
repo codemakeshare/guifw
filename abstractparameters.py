@@ -215,6 +215,12 @@ class ChoiceParameter(EditableParameter):
 
     def getChoiceStrings(self):
         cs = []
+
+
+        if isinstance(self.choices, dict):
+            return [str(name) for name in self.choices.keys()]
+
+
         for c in self.choices:
             if "name" in dir(c) and "value" in dir(c.name):
                 cs.append(c.name.value)
@@ -238,6 +244,13 @@ class ChoiceParameter(EditableParameter):
             return str(c)
 
     def getValue(self):
+        if self.value is None:
+            return None
+
+        if isinstance(self.choices, dict):
+            return self.choices[self.value]
+
+
         c = self.value
         if "name" in dir(c) and "value" in dir(c):
             return c.value
@@ -274,8 +287,11 @@ class ChoiceParameter(EditableParameter):
             self.viewRefresh(self)
 
     def updateValueByString(self,  value, execute_callbacks = True):
+        if isinstance(self.choices, dict):
+            self.value = value
+        else:
         #print "update value by string:", value
-        strings = self.getChoiceStrings()
+            strings = self.getChoiceStrings()
         for i in range(0, len(self.choices)):
             s = strings[i]
             if s == value:
@@ -289,7 +305,10 @@ class ChoiceParameter(EditableParameter):
         #print(self.value)
 
     def updateValueByIndex(self, index, execute_callbacks = True):
-        self.value = self.choices[index]
+        if isinstance(self.choices, dict):
+            self.value = [v for v in self.choices.keys()][index]
+        else:
+            self.value = self.choices[index]
 
         if execute_callbacks and self.callback != None:
             self.callback(self)
